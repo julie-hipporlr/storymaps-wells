@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no" />
+    <title>MrBeast & Wells of Life Wells</title>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+    </style>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.29/esri/themes/light/main.css">
+    <script src="https://js.arcgis.com/4.29/"></script>
+
+    <script>
+      require([
+        "esri/config",
+        "esri/Map",
+        "esri/views/MapView",
+        "esri/layers/FeatureLayer",
+      ], function(esriConfig, Map, MapView, FeatureLayer) {
+        
+        
+      // add api key
+        esriConfig.apiKey = "AAPK09866b5637d7432aad9ed46eb09fe7a3wCgRxCgZp48a84mR1ud0UHyOFrHxHiZttaKKtxybdtovOwmWSEK5819Gr_pKJ0D9";
+        
+        
+      // set up the map and view
+        const map = new Map({
+          basemap: "arcgis/topographic" // basemap styles service
+        });
+        const view = new MapView({
+          map: map,
+          center: [32.2, 0.5], // Longitude, latitude
+          zoom: 10, // Zoom level
+          container: "viewDiv" // Div element
+        });
+
+        
+        // set up symbols
+        const wellsRenderer = {
+        "type": "simple",
+        "symbol": {
+          "type": "picture-marker",
+          "url": "https://hipporlr.maps.arcgis.com/sharing/rest/content/items/db76c9e3b62f4bc39305c5b0095b7267/data",
+          "width": "45px",
+          "height": "35px"
+        }
+      }
+      
+        
+      // add wells of life label
+      const wellsOfLifeLabels = {
+        symbol: {
+          type: "text",
+          color: "#FFFFFF",
+          haloColor: "#000000",
+          haloSize: "1px",
+          font: {
+            size: "15px",
+            family: "Avenir Next LT Pro",
+            style: "italic",
+            weight: "bold"
+          }
+        },
+
+        labelPlacement: "above-center",
+        labelExpressionInfo: {
+          expression: "$feature.WOL_Label + $feature.WOL_Well__"
+        },
+        minScale: 500000
+      };
+         
+        
+      // add beast philanthropy label
+      const beastPhilLabels = {
+        symbol: {
+          type: "text",
+          color: "#FFFFFF",
+          haloColor: "#000000",
+          haloSize: "1px",
+          font: {
+            size: "14px",
+            family: "Avenir Next LT Pro",
+            style: "italic",
+            weight: "bold",
+          }
+        },
+
+        labelPlacement: "below-center",
+        labelExpressionInfo: {
+          expression: "$feature.BP_Label + $feature.Well__"
+        },
+        minScale: 100000
+      };
+        
+        
+        
+      // add wells feature layer as webstyle symbol
+        const wellsLayer = new FeatureLayer({
+        url: "https://services4.arcgis.com/Nqb1s4sMVdKWhMf4/arcgis/rest/services/WOL_MrBeast_Wells_Uganda_2/FeatureServer",
+        renderer: wellsRenderer,
+        labelingInfo: [wellsOfLifeLabels, beastPhilLabels],
+        outFields: ["*"]
+      });
+        
+      // click feature for link
+      view.on("click", (event) => {
+        view
+          .hitTest(event, {
+            // only include the layer you want to target
+            include: [wellsLayer],
+          })
+          .then((response) => {
+            const graphicHits = response.results;
+            if (graphicHits?.length > 0) {
+              graphicHits.forEach((graphicHit) => {
+                // get the ID of the storymap for the given well
+                const storyMapID = graphicHit.graphic.attributes.storyMapID;
+                if (storyMapID) {
+                  window.open(`https://storymaps.arcgis.com/collections/7224d9e8b46144de9ba346690b0de827?item=${storyMapID}`, "_blank");
+                } else {
+                  console.log("Story map ID is not available")
+                }
+              });
+            }
+          });
+      });
+
+        
+      // add layer to map
+      map.add(wellsLayer);
+      });
+    </script>
+
+  </head>
+  <body>
+    <div id="viewDiv"></div>
+  </body>
+</html>
